@@ -1,0 +1,7 @@
+.vs/
+BinStorage.TestApp/bin/
+BinStorage.TestApp/obj/
+BinStorage/bin/
+BinStorage/obj/
+BinStorage.TestApp/BinStorage.TestApp.csproj.user
+BinStorage/BinStorage.csproj.user
