@@ -48,7 +48,7 @@ For 3GB data file extracted from **RandomData2.7z**, here are the results:
 
 # Acceptance Criteria
 
-We will use the test application that will run a number of tests against provided solution. Therefore it is very important to implement API exactly as described in this document.
+The test application will be used to run a number of tests against provided solution. Therefore it is very important to implement API exactly as described in this document.
 
 The solution will be judged based on the outcome from the test as well as the source code review and supporting materials (description of the solution).
 
