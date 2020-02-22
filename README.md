@@ -14,6 +14,13 @@ It consists of two logical parts **Index** and **Storage File.**
 
 The task is to implement the Binary Storage that satisfies all requirements listed below and passes acceptance criteria.<br/> The solution should be accompanied with a short description and performance measurements.<br/> If any optional requirement is implemented, it should be mentioned in the description.<br/> Limitations, important design decisions and usage of 3rd party components should be described.
 
+# Benchmark:
+For 3GB data file extracted from **RandomData2.7z**, here are the results:
+- Running time:<br/>
+![Running time](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/benchmark_1.JPG "Running time")
+- RAM + Threads after running:<br/>
+![RAM + Threads](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/benchmark_2.JPG "RAM + Threads")
+
 # Requirements
 
 | Id | Description |
