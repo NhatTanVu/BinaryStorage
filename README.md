@@ -5,6 +5,7 @@
 - After data has been successfully added to the storage client could request it for reading by key and it should be returned as a stream of bytes. 
 - The storage should be thread-safe and should support multi-threaded addition of new data and reading of existing data. 
 - Logical organization of the **Binary Storage** is presented on the picture below:
+![Logical Structure](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/logical%20structure.jpg?raw=true "Logical Structure")
 
 It consists of two logical parts **Index** and **Storage File.**
 
