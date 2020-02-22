@@ -1,5 +1,3 @@
-### Binary Storage
-
 # Introduction
 
 - **Binary Storage** is a write once read many data structure stored on the hard drive. It should provide persistent storage for arbitrary binary content (stream of bytes). 
