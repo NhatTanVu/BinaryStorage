@@ -1,4 +1,6 @@
 .vs/
+_input/
+_output/
 BinStorage.TestApp/bin/
 BinStorage.TestApp/obj/
 BinStorage/bin/
