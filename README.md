@@ -18,7 +18,7 @@ The task is to implement the Binary Storage that satisfies all requirements list
 For 3GB data file extracted from **RandomData2.7z**, here are the results:
 - Running time:<br/>
 ![Running time](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/benchmark_1.JPG "Running time")
-- RAM + Threads after running:<br/>
+- RAM + Threads usage after running:<br/>
 ![RAM + Threads](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/benchmark_2.JPG "RAM + Threads")
 
 # Requirements
