@@ -7,3 +7,4 @@ BinStorage/bin/
 BinStorage/obj/
 BinStorage.TestApp/BinStorage.TestApp.csproj.user
 BinStorage/BinStorage.csproj.user
+_releases/
