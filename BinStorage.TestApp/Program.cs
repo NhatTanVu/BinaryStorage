@@ -15,8 +15,8 @@ namespace BinStorage.TestApp
 	{
         static void Main(string[] args)
 		{
-            string sourceFolder = @"C:\_code\BinaryStorage\_input\RandomData2";
-            string destFolder = @"C:\_code\BinaryStorage\_output";
+            string sourceFolder = @".\_input";
+            string destFolder = @".\_output";
             int degreeOfParallelism = 12;
             int count = 0;
 
