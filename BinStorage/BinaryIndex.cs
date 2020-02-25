@@ -24,9 +24,9 @@ namespace BinStorage
     public class BinaryReference
     {
         /// <summary>
-        /// Storage relative file path.
+        /// Byte offset within the Storage file.
         /// </summary>
-        public string StorageRelativePath { get; set; }
+        public long Offset { get; set; }
 
         /// <summary>
         /// Length of the stream.

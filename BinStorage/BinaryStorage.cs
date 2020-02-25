@@ -13,41 +13,44 @@ namespace BinStorage
 {
     public class BinaryStorage : IBinaryStorage
     {
-        private static int writeCount = 0;
+        private static object _lockObject = new object();
 
         private readonly StorageConfiguration storageConfiguration;
         private readonly string indexFileName = "index.bin";
         private readonly string indexFilePath;
-        private readonly string baseStorageFileName = "storage.bin";
+        private readonly string storageFileName = "storage.bin";
         private readonly string backupStorageFileName = "storage.bin.bak";
         private readonly string storageFilePath;
         private readonly string backupStorageFilePath;
-        private readonly long cacheSize = 1024; // 1024 MB
+        private readonly int cacheSize = 1024; // 1024MB
 
         private ConcurrentDictionary<string, BinaryIndex> indexTable;
         private MemoryCache storageCache;
+
+        private ConcurrentDictionary<string, BinaryIndex> indexTableBuffer;
+        private ConcurrentQueue<byte[]> storageBuffer;
+        private long storageBufferLength = 0;
+        private const int MAX_BUFFER_INDEX_SIZE = 1024 * 1024; // 1MB
+        private const int MAX_BUFFER_STORAGE_SIZE = 1024 * 1024; // 1MB
 
         public BinaryStorage(StorageConfiguration configuration)
         {
             this.storageConfiguration = configuration;
             this.indexTable = new ConcurrentDictionary<string, BinaryIndex>();
             this.indexFilePath = Path.Combine(configuration.WorkingFolder, this.indexFileName);
-            this.storageFilePath = Path.Combine(configuration.WorkingFolder, this.baseStorageFileName);
+            this.storageFilePath = Path.Combine(configuration.WorkingFolder, this.storageFileName);
             this.backupStorageFilePath = Path.Combine(configuration.WorkingFolder, this.backupStorageFileName);
 
+            this.indexTableBuffer = new ConcurrentDictionary<string, BinaryIndex>();
+            this.storageBuffer = new ConcurrentQueue<byte[]>();
+
             ConfigureStorageCache();
-            if (File.Exists(this.indexFilePath))
-            {
+            if (File.Exists(this.indexFilePath) && File.Exists(this.storageFilePath))
                 LoadIndex();
-                if (!StorageFilesExists())
-                {
-                    this.indexTable = new ConcurrentDictionary<string, BinaryIndex>();
-                    SaveIndex();
-                }
-            }
             else
             {
                 SaveIndex();
+                CreateStorage();
             }
         }
 
@@ -55,57 +58,45 @@ namespace BinStorage
         public void Add(string key, Stream data, StreamInfo parameters)
         {
             if (key == null)
-                    throw new ArgumentNullException("key is null");
+                throw new ArgumentNullException("key is null");
             if (data == null)
                 throw new ArgumentNullException("data is null");
             if (parameters == null)
                 throw new ArgumentNullException("parameters is null");
             CheckDataStream(data, parameters);
 
-            if (Contains(key))
+            if (CheckContains(key))
                 throw new ArgumentException("An element with the same key already exists or provided hash or length does not match the data");
             CheckMaxIndexFile();
 
             StreamInfo cloneParameters = (StreamInfo)parameters.Clone();
-            using (Stream compressedData = CompressIfNot(data, ref cloneParameters))
+            using (Stream compressedData = Compress(data, ref cloneParameters))
             {
-                CheckMaxStorageFile(compressedData);
-
-                try
+                lock (_lockObject)
                 {
-                    string storageRelativePath = CreateStorageRelativePath();
-                    BinaryIndex newIndex = CreateBinaryIndex(compressedData, cloneParameters, storageRelativePath);
-                    if (!this.indexTable.TryAdd(key, newIndex))
+                    CheckMaxStorageFile(compressedData);
+                    BinaryIndex newIndex = CreateBinaryIndex(compressedData, cloneParameters);
+                    if (!this.indexTableBuffer.TryAdd(key, newIndex))
                         throw new ArgumentException("An element with the same key already exists");
                     else
                     {
-                        Interlocked.Increment(ref writeCount);
-                        SaveStorage(compressedData, storageRelativePath);
-                        SaveIndex();
-                        Interlocked.Decrement(ref writeCount);
+                        storageBufferLength += compressedData.Length;
+                        AppendStorageBuffer(compressedData);
                     }
-                }
-                catch
-                {
-                    BinaryIndex removedIndex;
-                    while (!this.indexTable.TryRemove(key, out removedIndex))
-                        Thread.Sleep(500);
-                    RemoveStorage(removedIndex.Reference.StorageRelativePath);
-                    SaveIndex();
-                    Interlocked.Decrement(ref writeCount);
+
+                    FlushBuffer();
                 }
             }
         }
 
         public Stream Get(string key)
         {
-            while (Interlocked.CompareExchange(ref writeCount, 0, 0) > 0)
-                Thread.Sleep(500);
+            FlushBuffer(false);
 
             if (key == null)
                 throw new ArgumentNullException("key is null");
 
-            if (!Contains(key))
+            if (!CheckContains(key))
                 throw new KeyNotFoundException("key does not exist");
 
             Stream result = GetFromCache(key);
@@ -114,7 +105,7 @@ namespace BinStorage
                 BinaryIndex index;
                 if (indexTable.TryGetValue(key, out index))
                 {
-                    result = DecompressIfNeeded(result, index.Information);
+                    result = Decompress(result, index.Information);
                 }
                 else
                     throw new KeyNotFoundException("key does not exist");
@@ -127,7 +118,7 @@ namespace BinStorage
                     Stream storageStream = GetFromStorageFile(index);
                     if (storageStream != null)
                     {
-                        result = DecompressIfNeeded(storageStream, index.Information);
+                        result = Decompress(storageStream, index.Information);
                         AddToCache(key, storageStream);
                     }
                     else
@@ -142,11 +133,13 @@ namespace BinStorage
 
         public bool Contains(string key)
         {
-            return (ExistedInCache(key) || ExistedInIndex(key)) && !IsFileChanged(this.indexFilePath) && !IsFileChanged(this.storageFilePath);
+            FlushBuffer(false);
+            return CheckContains(key);
         }
 
         public void Dispose()
         {
+            FlushBuffer(false);
             ClearCache();
             ObjectSerializer.ClearTempFiles();
         }
@@ -162,32 +155,19 @@ namespace BinStorage
             this.storageCache = new MemoryCache("storageCache", cacheSettings);
         }
 
-        private Stream GetIndexStream()
+        private Stream GetIndexStream(ConcurrentDictionary<string, BinaryIndex> indexTable)
         {
-            return this.indexTable.Serialize();
+            return indexTable.Serialize();
         }
 
-        private long GetIndexStreamLength()
+        private long GetIndexStreamLength(ConcurrentDictionary<string, BinaryIndex> indexTable)
         {
             long indexStreamSize = 0;
-            using (Stream stream = GetIndexStream())
+            using (Stream stream = GetIndexStream(indexTable))
             {
                 indexStreamSize = stream.Length;
             }
             return indexStreamSize;
-        }
-
-        private bool StorageFilesExists()
-        {
-            foreach(BinaryIndex index in this.indexTable.Values)
-            {
-                string storageRelativePath = index.Reference.StorageRelativePath;
-                string storageFilePath = Path.Combine(this.storageConfiguration.WorkingFolder, storageRelativePath);
-                if (!File.Exists(storageFilePath))
-                    return false;
-            }
-
-            return true;
         }
 
         private void LoadIndex()
@@ -198,42 +178,108 @@ namespace BinStorage
             }
         }
 
+        private bool CheckContains(string key)
+        {
+            return ExistedInCache(key) || ExistedInIndex(key);
+        }
+
         private void CheckMaxIndexFile()
         {
-            long indexFileSize = GetIndexStreamLength();
+            long indexFileSize = GetIndexStreamLength(indexTable) + GetIndexStreamLength(indexTableBuffer);
             if ((this.storageConfiguration.MaxIndexFile > 0) && (indexFileSize > this.storageConfiguration.MaxIndexFile))
                 throw new Exception("MaxIndexFile was reached");
         }
 
+        private void FlushBuffer(bool requiredCheck = true)
+        {
+            lock (_lockObject)
+            {
+                FlushIndexBuffer(requiredCheck);
+                FlushStorageBuffer(requiredCheck);
+            }
+        }
+
+        private void FlushIndexBuffer(bool requiredCheck)
+        {
+            if (!this.indexTableBuffer.IsEmpty && (!requiredCheck || GetIndexStreamLength(this.indexTableBuffer) >= MAX_BUFFER_INDEX_SIZE))
+            {
+                try
+                {
+                    this.indexTableBuffer.ToList().ForEach(x => this.indexTable.TryAdd(x.Key, x.Value));
+                    SaveIndex();
+                    FlushStorageBuffer(false);
+                    this.indexTableBuffer.Clear();
+                }
+                catch
+                {
+                    this.indexTableBuffer.ToList().ForEach(x => this.indexTable.TryRemove(x.Key, out BinaryIndex value));
+                    SaveIndex();
+                }
+            }
+        }
+
+        private void FlushStorageBuffer(bool requiredCheck)
+        {
+            if (this.storageBufferLength > 0 && (!requiredCheck || this.storageBufferLength >= MAX_BUFFER_STORAGE_SIZE))
+            {
+                try
+                {
+                    BackupStorage();
+                    byte[] result = new byte[0];
+                    byte[] temp;
+                    while (this.storageBuffer.TryDequeue(out temp))
+                    {
+                        this.storageBufferLength -= temp.Length;
+                        result = result.Concat(temp).ToArray();
+                    }
+                    AppendStorage(result);
+                    FlushIndexBuffer(false);
+                }
+                catch
+                {
+                    RestoreBackupStorage();
+                }
+                finally
+                {
+                    RemoveBackupStorage();
+                }
+            }
+        }
+
+        private void AppendStorageBuffer(Stream data)
+        {
+            byte[] buffer = new byte[16 * 1024];
+            using (MemoryStream ms = new MemoryStream())
+            {
+                int read;
+                while ((read = data.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    ms.Write(buffer, 0, read);
+                }
+                byte[] dataBytes = ms.ToArray();
+                this.storageBuffer.Enqueue(dataBytes);
+            }
+        }
+
         private void SaveIndex()
         {
-            using (FileStream fileStream = File.Open(this.indexFilePath, FileMode.Create, FileAccess.Write, FileShare.Write))
+            using (FileStream fileStream = File.Open(this.indexFilePath, FileMode.Create))
             {
-                using (Stream stream = GetIndexStream())
+                using (Stream stream = GetIndexStream(this.indexTable))
                 {
                     stream.CopyTo(fileStream);
                 }
             }
         }
 
-        private string CreateStorageRelativePath()
+        private BinaryIndex CreateBinaryIndex(Stream data, StreamInfo parameters)
         {
-            string fileName = string.Format("{0}.{1}{2}", Path.GetFileNameWithoutExtension(this.baseStorageFileName), Guid.NewGuid().ToString(), Path.GetExtension(this.baseStorageFileName));
-            string relativeFolderPath = Path.Combine(DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(), DateTime.Now.Day.ToString(), DateTime.Now.Hour.ToString(), DateTime.Now.Minute.ToString(), DateTime.Now.Second.ToString());
-            string folderPath = Path.Combine(this.storageConfiguration.WorkingFolder, relativeFolderPath);
-            Directory.CreateDirectory(folderPath);
-
-            string storageRelativePath = Path.Combine(relativeFolderPath, fileName);
-            return storageRelativePath;
-        }
-
-        private BinaryIndex CreateBinaryIndex(Stream data, StreamInfo parameters, string storageFileName)
-        {
+            long offset = GetStorageFileLength() + this.storageBufferLength;
             BinaryIndex result = new BinaryIndex()
             {
                 Reference = new BinaryReference()
                 {
-                    StorageRelativePath = storageFileName,
+                    Offset = offset,
                     Length = data.Length
                 },
                 Information = parameters
@@ -242,29 +288,9 @@ namespace BinStorage
             return result;
         }
 
-        private long GetFolderSize(DirectoryInfo d)
-        {
-            long size = 0;
-            // Add file sizes.
-            FileInfo[] fis = d.GetFiles();
-            foreach (FileInfo fi in fis)
-            {
-                size += fi.Length;
-            }
-            // Add subdirectory sizes.
-            DirectoryInfo[] dis = d.GetDirectories();
-            foreach (DirectoryInfo di in dis)
-            {
-                size += GetFolderSize(di);
-            }
-            return size;
-        }
-
         private long GetStorageFileLength()
         {
-            long indexStreamLength = GetIndexStreamLength();
-            long workingFolderLength = GetFolderSize(new DirectoryInfo(this.storageConfiguration.WorkingFolder));
-            return workingFolderLength - indexStreamLength;
+            return new FileInfo(this.storageFilePath).Length;
         }
 
         private void CheckDataStream(Stream data, StreamInfo parameters)
@@ -287,25 +313,37 @@ namespace BinStorage
 
         private void CheckMaxStorageFile(Stream data)
         {
-            long storageFileSize = GetStorageFileLength();
+            long storageFileSize = GetStorageFileLength() + this.storageBufferLength;
             if ((this.storageConfiguration.MaxStorageFile > 0) && ((storageFileSize + data.Length) > this.storageConfiguration.MaxStorageFile))
                 throw new Exception("MaxStorageFile was reached");
         }
 
-        private void SaveStorage(Stream data, string storageRelativePath)
+        private void CreateStorage()
         {
-            string storageFilePath = Path.Combine(this.storageConfiguration.WorkingFolder, storageRelativePath);
-            using (FileStream fileStream = File.Open(storageFilePath, FileMode.Create))
+            File.Create(this.storageFilePath).Close();
+        }
+
+        private void AppendStorage(byte[] data)
+        {
+            using (FileStream fileStream = File.Open(this.storageFilePath, FileMode.Append))
             {
-                data.CopyTo(fileStream);
+                fileStream.Write(data, 0, data.Length);
             }
         }
 
-        private void RemoveStorage(string storageRelativePath)
+        private void BackupStorage()
         {
-            string storageFilePath = Path.Combine(this.storageConfiguration.WorkingFolder, storageRelativePath);
-            if (File.Exists(storageFilePath))
-                File.Delete(storageFilePath);
+            File.Copy(this.storageFilePath, this.backupStorageFilePath, true);
+        }
+
+        private void RestoreBackupStorage()
+        {
+            File.Copy(this.backupStorageFilePath, this.storageFilePath, true);
+        }
+
+        private void RemoveBackupStorage()
+        {
+            File.Delete(this.backupStorageFilePath);
         }
 
         private Stream GetFromCache(string key)
@@ -317,9 +355,9 @@ namespace BinStorage
         private Stream GetFromStorageFile(BinaryIndex index)
         {
             MemoryStream result = null;
-            string storageFilePath = Path.Combine(this.storageConfiguration.WorkingFolder, index.Reference.StorageRelativePath);
-            using (FileStream fs = File.Open(storageFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (FileStream fs = File.Open(this.storageFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
+                fs.Seek(index.Reference.Offset, SeekOrigin.Begin);
                 byte[] data = new byte[index.Reference.Length];
                 fs.Read(data, 0, data.Length);
                 result = new MemoryStream(data);
@@ -345,10 +383,10 @@ namespace BinStorage
 
         private bool ExistedInIndex(string key)
         {
-            return this.indexTable.ContainsKey(key);
+            return this.indexTable.ContainsKey(key) || this.indexTableBuffer.ContainsKey(key);
         }
 
-        private Stream CompressIfNot(Stream result, ref StreamInfo parameters)
+        private Stream Compress(Stream result, ref StreamInfo parameters)
         {
             if (!parameters.IsCompressed && (result.Length > this.storageConfiguration.CompressionThreshold))
             {
@@ -359,7 +397,7 @@ namespace BinStorage
                 return result;
         }
 
-        private Stream DecompressIfNeeded(Stream result, StreamInfo parameters)
+        private Stream Decompress(Stream result, StreamInfo parameters)
         {
             if (parameters.IsCompressed)
                 return result.Decompress();
@@ -371,12 +409,6 @@ namespace BinStorage
                 clonedStream.Seek(0, SeekOrigin.Begin);
                 return clonedStream;
             }
-        }
-
-        private bool IsFileChanged(string filePath)
-        {
-            // TODO: Check if the file content still matches with the corresponding data in memory
-            return false;
         }
         #endregion
     }
