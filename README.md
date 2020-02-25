@@ -20,6 +20,7 @@ For 3GB data, with 25030 files, extracted from **RandomData2.7z** and 12 concurr
 | --- | --- | --- |
 | v1.0 | ![Version 1.0 Time](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v1.0_Time.JPG "Version 1.0 Time") | ![Version 1.0 Memory](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v1.0_Memory.JPG "Version 1.0 Memory") |
 | v2.0 | ![Version 2.0 Time](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v2.0_Time.JPG "Version 2.0 Time") | ![Version 2.0 Memory](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v2.0_Memory.JPG "Version 1.0 Memory") |
+| v3.0 | ![Version 3.0 Time](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v3.0_Time.JPG "Version 3.0 Time") | ![Version 3.0 Memory](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v3.0_Memory.JPG "Version 3.0 Memory") |
 
 
 # Requirements
