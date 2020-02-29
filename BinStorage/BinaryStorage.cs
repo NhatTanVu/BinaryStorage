@@ -16,9 +16,7 @@ namespace BinStorage
         private static object _lockObject = new object();
 
         private readonly StorageConfiguration storageConfiguration;
-        private readonly string indexFileName = "index.bin";
         private readonly string indexFilePath;
-        private readonly string storageFileName = "storage.bin";
         private readonly string backupStorageFileName = "storage.bin.bak";
         private readonly string storageFilePath;
         private readonly string backupStorageFilePath;
@@ -33,12 +31,15 @@ namespace BinStorage
         private const int MAX_BUFFER_INDEX_SIZE = 1024 * 1024; // 1MB
         private const int MAX_BUFFER_STORAGE_SIZE = 1024 * 1024; // 1MB
 
+        public static string IndexFileName = "index.bin";
+        public static string StorageFileName = "storage.bin";
+
         public BinaryStorage(StorageConfiguration configuration)
         {
             this.storageConfiguration = configuration;
             this.indexTable = new ConcurrentDictionary<string, BinaryIndex>();
-            this.indexFilePath = Path.Combine(configuration.WorkingFolder, this.indexFileName);
-            this.storageFilePath = Path.Combine(configuration.WorkingFolder, this.storageFileName);
+            this.indexFilePath = Path.Combine(configuration.WorkingFolder, IndexFileName);
+            this.storageFilePath = Path.Combine(configuration.WorkingFolder, StorageFileName);
             this.backupStorageFilePath = Path.Combine(configuration.WorkingFolder, this.backupStorageFileName);
 
             this.indexTableBuffer = new ConcurrentDictionary<string, BinaryIndex>();
@@ -174,7 +175,7 @@ namespace BinStorage
         {
             using (FileStream fs = File.Open(this.indexFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                this.indexTable = (ConcurrentDictionary<string, BinaryIndex>)fs.Deserialize();
+                this.indexTable = (ConcurrentDictionary<string, BinaryIndex>)fs.Decompress().Deserialize();
             }
         }
 
@@ -267,7 +268,7 @@ namespace BinStorage
             {
                 using (Stream stream = GetIndexStream(this.indexTable))
                 {
-                    stream.CopyTo(fileStream);
+                    stream.Compress().CopyTo(fileStream);
                 }
             }
         }

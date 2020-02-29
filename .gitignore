@@ -1,5 +1,5 @@
 .vs/
-_input/
+/_input/
 _output/
 BinStorage.TestApp/bin/
 BinStorage.TestApp/obj/
@@ -8,3 +8,6 @@ BinStorage/obj/
 BinStorage.TestApp/BinStorage.TestApp.csproj.user
 BinStorage/BinStorage.csproj.user
 _releases/
+BinStorage.Test/obj/
+BinStorage.Test/bin/
+packages/
