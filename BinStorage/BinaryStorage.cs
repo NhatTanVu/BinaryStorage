@@ -205,9 +205,6 @@ namespace BinStorage
             {
                 FlushIndexBuffer(requiredCheck);
                 FlushStorageBuffer(requiredCheck);
-
-                if (requiredCheck && this.indexTableBuffer.IsEmpty && this.storageBufferLength == 0)
-                    ObjectSerializer.ClearTempFiles();
             }
         }
 
