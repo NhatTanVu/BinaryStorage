@@ -54,76 +54,127 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="_assert\shouldadd\index.bin">
+    <None Include="_assert\ShouldAdd\index.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldadd\storage.bin">
+    <None Include="_assert\ShouldAdd\storage.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\16ddb0c9-9a88-47f2-a582-f7f09322506b.bin">
+    <None Include="_assert\ShouldGet\16ddb0c9-9a88-47f2-a582-f7f09322506b.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\29b4d67b-cd7a-43ed-a8c1-0db68bee0dcf.bin">
+    <None Include="_assert\ShouldGet\29b4d67b-cd7a-43ed-a8c1-0db68bee0dcf.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\3a6cacb4-a278-46f2-9a8d-4aa4bd016dbc.bin">
+    <None Include="_assert\ShouldGet\3a6cacb4-a278-46f2-9a8d-4aa4bd016dbc.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\414be711-170c-455e-bf3e-8a22361c3065.bin">
+    <None Include="_assert\ShouldGet\414be711-170c-455e-bf3e-8a22361c3065.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\56fdf2d9-c108-4bb6-bdda-5aae1c165351.bin">
+    <None Include="_assert\ShouldGet\56fdf2d9-c108-4bb6-bdda-5aae1c165351.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\5aa8d733-381b-4688-9f0b-50b405c2b796.bin">
+    <None Include="_assert\ShouldGet\5aa8d733-381b-4688-9f0b-50b405c2b796.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\793eee18-494e-479d-9a09-366829b1e6ff.bin">
+    <None Include="_assert\ShouldGet\793eee18-494e-479d-9a09-366829b1e6ff.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\7c425309-3d1d-4bc0-9950-52572fddd06c.bin">
+    <None Include="_assert\ShouldGet\7c425309-3d1d-4bc0-9950-52572fddd06c.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\81ce3f98-1c0d-4071-8df7-3580438cfb86.bin">
+    <None Include="_assert\ShouldGet\81ce3f98-1c0d-4071-8df7-3580438cfb86.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_assert\shouldget\9c6d89e6-c39b-4ad3-ac0c-c59270cf4ad9.bin">
+    <None Include="_assert\ShouldGet\9c6d89e6-c39b-4ad3-ac0c-c59270cf4ad9.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\16ddb0c9-9a88-47f2-a582-f7f09322506b.bin">
+    <None Include="_assert\ShouldNotAddDuplicateKey\16ddb0c9-9a88-47f2-a582-f7f09322506b.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\29b4d67b-cd7a-43ed-a8c1-0db68bee0dcf.bin">
+    <None Include="_assert\ShouldStoreOnce\index.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\3a6cacb4-a278-46f2-9a8d-4aa4bd016dbc.bin">
+    <None Include="_assert\ShouldStoreOnce\storage.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\414be711-170c-455e-bf3e-8a22361c3065.bin">
+    <None Include="_input\ShouldAdd\16ddb0c9-9a88-47f2-a582-f7f09322506b.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\56fdf2d9-c108-4bb6-bdda-5aae1c165351.bin">
+    <None Include="_input\ShouldAdd\29b4d67b-cd7a-43ed-a8c1-0db68bee0dcf.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\5aa8d733-381b-4688-9f0b-50b405c2b796.bin">
+    <None Include="_input\ShouldAdd\3a6cacb4-a278-46f2-9a8d-4aa4bd016dbc.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\793eee18-494e-479d-9a09-366829b1e6ff.bin">
+    <None Include="_input\ShouldAdd\414be711-170c-455e-bf3e-8a22361c3065.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\7c425309-3d1d-4bc0-9950-52572fddd06c.bin">
+    <None Include="_input\ShouldAdd\56fdf2d9-c108-4bb6-bdda-5aae1c165351.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\81ce3f98-1c0d-4071-8df7-3580438cfb86.bin">
+    <None Include="_input\ShouldAdd\5aa8d733-381b-4688-9f0b-50b405c2b796.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldadd\9c6d89e6-c39b-4ad3-ac0c-c59270cf4ad9.bin">
+    <None Include="_input\ShouldAdd\793eee18-494e-479d-9a09-366829b1e6ff.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldget\index.bin">
+    <None Include="_input\ShouldAdd\7c425309-3d1d-4bc0-9950-52572fddd06c.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\shouldget\storage.bin">
+    <None Include="_input\ShouldAdd\81ce3f98-1c0d-4071-8df7-3580438cfb86.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAdd\9c6d89e6-c39b-4ad3-ac0c-c59270cf4ad9.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldGet\index.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldGet\storage.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotAddDuplicateKey\index.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotAddDuplicateKey\storage.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\13598b86-ebfc-4159-b7bf-f6f519ecb6f7.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\1dd98934-66ea-4402-8cb4-bb74871e5bea.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\2296b29f-781c-4f83-9470-af9de0877483.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\25802795-8aff-415a-88cc-58eec15438d8.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\3a6cacb4-a278-46f2-9a8d-4aa4bd016dbc.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\55887704-34a5-4416-9216-de34c656c85c.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\906de929-c1b2-460f-af56-e01f5847b509.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\92303353-be13-419a-920e-8bf1e63a3ea4.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\acbd1deb-cd6d-4d57-a1e0-99e20630b186.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompress\ca76f37a-717a-4e48-92a8-3eb062dddacf.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldStoreOnce\data.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldStoreOnce\data_copy.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

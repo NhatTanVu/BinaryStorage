@@ -17,45 +17,39 @@ namespace BinStorage.Test
         [TestMethod]
         public void ShouldAdd()
         {
+            string shouldAddFolder = "ShouldAdd";
+            AddAndCheck(shouldAddFolder);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException),
+            "An element with the same key already exists or provided hash or length does not match the data")]
+        public void ShouldNotAddDuplicatedKey()
+        {
             // Arrange
-            string shouldAddFolder = "shouldadd";
-            string inputFolderPath = Path.Combine(inputFolder, shouldAddFolder);
-            string assertIndexPath = Path.Combine(assertFolder, shouldAddFolder, BinaryStorage.IndexFileName);
-            string assertStoragePath = Path.Combine(assertFolder, shouldAddFolder, BinaryStorage.StorageFileName);
-            string outputFolderPath = Path.Combine(outputFolder, shouldAddFolder);
-
-            if (!Directory.Exists(outputFolderPath))
-                Directory.CreateDirectory(outputFolderPath);
-            else
-                EmptyFolder(outputFolderPath);
-
-            string actualIndexPath = Path.Combine(outputFolderPath, BinaryStorage.IndexFileName);
-            string actualStoragePath = Path.Combine(outputFolderPath, BinaryStorage.StorageFileName);
+            string shouldGetFolder = "ShouldNotAddDuplicateKey";
+            string inputFolderPath = Path.Combine(inputFolder, shouldGetFolder);
+            string assertFileName = "16ddb0c9-9a88-47f2-a582-f7f09322506b.bin";
+            string assertFilePath = Path.Combine(assertFolder, shouldGetFolder, assertFileName);
             // Act
-            using (var storage = new BinaryStorage(new StorageConfiguration() { WorkingFolder = outputFolderPath }))
+            using (var storage = new BinaryStorage(new StorageConfiguration() { WorkingFolder = inputFolderPath }))
             {
-                Directory.GetFiles(inputFolderPath, "*", SearchOption.AllDirectories).ToList()
-                    .ForEach(s =>
-                    {
-                        string fileName = Path.GetFileName(s);
-                        AddFile(storage, s, fileName);
-                    });
+                AddFile(storage, assertFilePath, assertFileName);
             }
-            // Assert
-            byte[] expectedIndexBytes = File.ReadAllBytes(assertIndexPath);
-            byte[] actualIndexBytes = File.ReadAllBytes(actualIndexPath);
-            byte[] expectedStorageBytes = File.ReadAllBytes(assertStoragePath);
-            byte[] actualStorageBytes = File.ReadAllBytes(actualStoragePath);
+        }
 
-            Assert.IsTrue(expectedIndexBytes.SequenceEqual(actualIndexBytes));
-            Assert.IsTrue(expectedStorageBytes.SequenceEqual(actualStorageBytes));
+        [TestMethod]
+        public void ShouldStoreOnce()
+        {
+            string shouldStoreOnceFolder = "ShouldStoreOnce";
+            AddAndCheck(shouldStoreOnceFolder);
         }
 
         [TestMethod]
         public void ShouldGet()
         {
             // Arrange
-            string shouldGetFolder = "shouldget";
+            string shouldGetFolder = "ShouldGet";
             string inputFolderPath = Path.Combine(inputFolder, shouldGetFolder);
             string assertFolderPath = Path.Combine(assertFolder, shouldGetFolder);
             // Act
@@ -99,7 +93,7 @@ namespace BinStorage.Test
         public void ShouldContain()
         {
             // Arrange
-            string shouldContainFolder = "shouldget";
+            string shouldContainFolder = "ShouldGet";
             string inputFolderPath = Path.Combine(inputFolder, shouldContainFolder);
             string assertFolderPath = Path.Combine(assertFolder, shouldContainFolder);
             // Act
@@ -117,7 +111,73 @@ namespace BinStorage.Test
             Assert.IsTrue(true);
         }
 
+        [TestMethod]
+        public void ShouldNotCompress()
+        {
+            // Arrange
+            string shouldNotCompress = "ShouldNotCompress";
+            string inputFolderPath = Path.Combine(inputFolder, shouldNotCompress);
+            string outputFolderPath = Path.Combine(outputFolder, shouldNotCompress);
+            string outputStoragePath = Path.Combine(outputFolderPath, BinaryStorage.StorageFileName);
+            long compressionThreshold = 1024 * 12; // 12 KB
+            long assertLength = 0;
+
+            if (!Directory.Exists(outputFolderPath))
+                Directory.CreateDirectory(outputFolderPath);
+            else
+                EmptyFolder(outputFolderPath);
+            // Act
+            using (var storage = new BinaryStorage(new StorageConfiguration() { WorkingFolder = outputFolderPath, CompressionThreshold = compressionThreshold }))
+            {
+                Directory.GetFiles(inputFolderPath, "*", SearchOption.AllDirectories).ToList()
+                    .ForEach(s =>
+                    {
+                        assertLength += new FileInfo(s).Length;
+                        string fileName = Path.GetFileName(s);
+                        AddFile(storage, s, fileName);
+                    });
+            }
+            // Assert
+            long actualLength = new FileInfo(outputStoragePath).Length;
+            Assert.AreEqual(assertLength, actualLength);
+        }
+
         #region Private Methods
+        private void AddAndCheck(string testCaseFolder)
+        {
+            // Arrange
+            string inputFolderPath = Path.Combine(inputFolder, testCaseFolder);
+            string assertIndexPath = Path.Combine(assertFolder, testCaseFolder, BinaryStorage.IndexFileName);
+            string assertStoragePath = Path.Combine(assertFolder, testCaseFolder, BinaryStorage.StorageFileName);
+            string outputFolderPath = Path.Combine(outputFolder, testCaseFolder);
+
+            if (!Directory.Exists(outputFolderPath))
+                Directory.CreateDirectory(outputFolderPath);
+            else
+                EmptyFolder(outputFolderPath);
+
+            string actualIndexPath = Path.Combine(outputFolderPath, BinaryStorage.IndexFileName);
+            string actualStoragePath = Path.Combine(outputFolderPath, BinaryStorage.StorageFileName);
+            // Act
+            using (var storage = new BinaryStorage(new StorageConfiguration() { WorkingFolder = outputFolderPath }))
+            {
+                Directory.GetFiles(inputFolderPath, "*", SearchOption.AllDirectories).ToList()
+                    .ForEach(s =>
+                    {
+                        string fileName = Path.GetFileName(s);
+                        AddFile(storage, s, fileName);
+                    });
+            }
+            // Assert
+            byte[] expectedIndexBytes = File.ReadAllBytes(assertIndexPath);
+            byte[] actualIndexBytes = File.ReadAllBytes(actualIndexPath);
+            byte[] expectedStorageBytes = File.ReadAllBytes(assertStoragePath);
+            byte[] actualStorageBytes = File.ReadAllBytes(actualStoragePath);
+
+            Assert.IsTrue(expectedIndexBytes.SequenceEqual(actualIndexBytes));
+            Assert.IsTrue(expectedStorageBytes.SequenceEqual(actualStorageBytes));
+        }
+
         private void AddFile(IBinaryStorage storage, string filePath, string key)
         {
             using (var file = new FileStream(filePath, FileMode.Open))

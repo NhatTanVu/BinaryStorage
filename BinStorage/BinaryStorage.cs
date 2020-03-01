@@ -73,13 +73,21 @@ namespace BinStorage
             StreamInfo cloneParameters = (StreamInfo)parameters.Clone();
             using (Stream compressedData = Compress(data, ref cloneParameters))
             {
+                CalculateHash(compressedData, ref cloneParameters);
+                
                 lock (_lockObject)
                 {
-                    CheckMaxStorageFile(compressedData);
-                    BinaryIndex newIndex = CreateBinaryIndex(compressedData, cloneParameters);
-                    if (!this.indexTableBuffer.TryAdd(key, newIndex))
+                    BinaryIndex index = FindBinaryIndexByHash(cloneParameters);
+                    bool isNew = false;
+                    if (index == null)
+                    {
+                        CheckMaxStorageFile(compressedData);
+                        index = CreateBinaryIndex(compressedData, cloneParameters);
+                        isNew = true;
+                    }
+                    if (!this.indexTableBuffer.TryAdd(key, index))
                         throw new ArgumentException("An element with the same key already exists");
-                    else
+                    else if (isNew)
                     {
                         storageBufferLength += compressedData.Length;
                         AppendStorageBuffer(compressedData);
@@ -273,6 +281,15 @@ namespace BinStorage
             }
         }
 
+        private BinaryIndex FindBinaryIndexByHash(StreamInfo parameters)
+        {
+            KeyValuePair<string, BinaryIndex> result;
+            result = this.indexTable.AsParallel().FirstOrDefault(index => index.Value.Information.Hash.SequenceEqual(parameters.Hash));
+            if (result.Equals(default(KeyValuePair<string, BinaryIndex>)))
+                result = this.indexTableBuffer.AsParallel().FirstOrDefault(index => index.Value.Information.Hash.SequenceEqual(parameters.Hash));
+            return result.Equals(default(KeyValuePair<string, BinaryIndex>)) ? null : result.Value;
+        }
+
         private BinaryIndex CreateBinaryIndex(Stream data, StreamInfo parameters)
         {
             long offset = GetStorageFileLength() + this.storageBufferLength;
@@ -396,6 +413,18 @@ namespace BinStorage
             }
             else
                 return result;
+        }
+
+        private void CalculateHash(Stream result, ref StreamInfo parameters)
+        {
+            if(parameters.Hash == null)
+            {
+                using (MD5 md5 = MD5.Create())
+                {
+                    parameters.Hash = md5.ComputeHash(result);
+                    result.Seek(0, SeekOrigin.Begin);
+                }
+            }
         }
 
         private Stream Decompress(Stream result, StreamInfo parameters)
