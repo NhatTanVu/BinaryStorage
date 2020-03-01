@@ -21,10 +21,12 @@ For 3GB data, with 25030 files, extracted from **RandomData2.7z** and 12 concurr
 | **1.0** | ![Version 1.0 Time](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v1.0_Time.JPG "Version 1.0 Time") | ![Version 1.0 Memory](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v1.0_Memory.JPG "Version 1.0 Memory") |
 | **2.0** | ![Version 2.0 Time](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v2.0_Time.JPG "Version 2.0 Time") | ![Version 2.0 Memory](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v2.0_Memory.JPG "Version 1.0 Memory") |
 | **3.0** | ![Version 3.0 Time](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v3.0_Time.JPG "Version 3.0 Time") | ![Version 3.0 Memory](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v3.0_Memory.JPG "Version 3.0 Memory") |
+| **4.0** | ![Version 4.0 Time](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v4.0_Time.JPG "Version 4.0 Time") | ![Version 4.0 Memory](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/v4.0_Memory.JPG "Version 4.0 Memory") |
 
+# Unit Tests:
+![Unit Tests](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/Unit%20Tests.JPG "Unit Tests")
 
 # Requirements
-
 | Id | Description |
 | --- | --- |
 | **#1** | The solution should be implemented in C# language using .NET 4 or higher in Visual Studio 2015 or higher.  Use of 3rd party libraries should be minimal and limited to open source public libraries. All sources should be provided. Solution should be standalone and should not require any additional software installed on the host machine like MS SQL Server, MS Message Queue, etc. |
