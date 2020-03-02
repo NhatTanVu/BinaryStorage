@@ -25,6 +25,8 @@ For 3GB data, with 25030 files, extracted from **RandomData2.7z** and 12 concurr
 
 # Unit Tests:
 ![Unit Tests](https://raw.githubusercontent.com/NhatTanVu/BinaryStorage/master/_screenshots/Unit%20Tests.JPG "Unit Tests")
+<br/>
+**Notes:** In case the tests don't run on VS 2017, please disable the **"For improved performance..."** checkbox in VS (**Tools > Options > Test > General**)
 
 # Requirements
 | Id | Description |
