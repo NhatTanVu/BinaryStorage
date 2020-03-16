@@ -9,9 +9,9 @@ namespace BinStorage.Test
     [TestClass]
     public class BinaryStorageTest
     {
-        private readonly string inputFolder = ".\\_input";
-        private readonly string assertFolder = ".\\_assert";
-        private readonly string outputFolder = ".\\_output";
+        private readonly string inputBasePath = ".\\_input";
+        private readonly string assertBasePath = ".\\_assert";
+        private readonly string outputBasePath = ".\\_output";
         private readonly int degreeOfParallelism = 12;
 
         [TestMethod]
@@ -27,14 +27,14 @@ namespace BinStorage.Test
         public void ShouldNotAddDuplicatedKey()
         {
             // Arrange
-            string shouldGetFolder = "ShouldNotAddDuplicateKey";
-            string inputFolderPath = Path.Combine(inputFolder, shouldGetFolder);
+            string inputFolder = "ShouldNotAddDuplicateKey";
+            string inputFolderPath = Path.Combine(this.inputBasePath, inputFolder);
             string assertFileName = "16ddb0c9-9a88-47f2-a582-f7f09322506b.bin";
-            string assertFilePath = Path.Combine(assertFolder, shouldGetFolder, assertFileName);
+            string assertFilePath = Path.Combine(this.assertBasePath, inputFolder, assertFileName);
             // Act
             using (var storage = new BinaryStorage(new StorageConfiguration() { WorkingFolder = inputFolderPath }))
             {
-                AddFile(storage, assertFilePath, assertFileName);
+                AddFileStream(storage, assertFilePath, assertFileName);
             }
         }
 
@@ -49,9 +49,9 @@ namespace BinStorage.Test
         public void ShouldGet()
         {
             // Arrange
-            string shouldGetFolder = "ShouldGet";
-            string inputFolderPath = Path.Combine(inputFolder, shouldGetFolder);
-            string assertFolderPath = Path.Combine(assertFolder, shouldGetFolder);
+            string inputFolder = "ShouldGet";
+            string inputFolderPath = Path.Combine(this.inputBasePath, inputFolder);
+            string assertFolderPath = Path.Combine(this.assertBasePath, inputFolder);
             // Act
             using (var storage = new BinaryStorage(new StorageConfiguration() { WorkingFolder = inputFolderPath }))
             {
@@ -94,8 +94,8 @@ namespace BinStorage.Test
         {
             // Arrange
             string shouldContainFolder = "ShouldGet";
-            string inputFolderPath = Path.Combine(inputFolder, shouldContainFolder);
-            string assertFolderPath = Path.Combine(assertFolder, shouldContainFolder);
+            string inputFolderPath = Path.Combine(this.inputBasePath, shouldContainFolder);
+            string assertFolderPath = Path.Combine(this.assertBasePath, shouldContainFolder);
             // Act
             using (var storage = new BinaryStorage(new StorageConfiguration() { WorkingFolder = inputFolderPath }))
             {
@@ -116,8 +116,8 @@ namespace BinStorage.Test
         {
             // Arrange
             string shouldNotCompress = "ShouldNotCompress";
-            string inputFolderPath = Path.Combine(inputFolder, shouldNotCompress);
-            string outputFolderPath = Path.Combine(outputFolder, shouldNotCompress);
+            string inputFolderPath = Path.Combine(this.inputBasePath, shouldNotCompress);
+            string outputFolderPath = Path.Combine(this.outputBasePath, shouldNotCompress);
             string outputStoragePath = Path.Combine(outputFolderPath, BinaryStorage.StorageFileName);
             long compressionThreshold = 1024 * 12; // 12 KB
             long assertLength = 0;
@@ -134,7 +134,7 @@ namespace BinStorage.Test
                     {
                         assertLength += new FileInfo(s).Length;
                         string fileName = Path.GetFileName(s);
-                        AddFile(storage, s, fileName);
+                        AddFileStream(storage, s, fileName);
                     });
             }
             // Assert
@@ -142,14 +142,21 @@ namespace BinStorage.Test
             Assert.AreEqual(assertLength, actualLength);
         }
 
+        [TestMethod]
+        public void ShouldAddNetworkStream()
+        {
+            string shouldAddFolder = "ShouldAdd";
+            AddAndCheck(shouldAddFolder, isNetwork: true);
+        }
+
         #region Private Methods
-        private void AddAndCheck(string testCaseFolder)
+        private void AddAndCheck(string testCaseFolder, bool isNetwork = false)
         {
             // Arrange
-            string inputFolderPath = Path.Combine(inputFolder, testCaseFolder);
-            string assertIndexPath = Path.Combine(assertFolder, testCaseFolder, BinaryStorage.IndexFileName);
-            string assertStoragePath = Path.Combine(assertFolder, testCaseFolder, BinaryStorage.StorageFileName);
-            string outputFolderPath = Path.Combine(outputFolder, testCaseFolder);
+            string inputFolderPath = Path.Combine(this.inputBasePath, testCaseFolder);
+            string assertIndexPath = Path.Combine(this.assertBasePath, testCaseFolder, BinaryStorage.IndexFileName);
+            string assertStoragePath = Path.Combine(this.assertBasePath, testCaseFolder, BinaryStorage.StorageFileName);
+            string outputFolderPath = Path.Combine(this.outputBasePath, testCaseFolder);
 
             if (!Directory.Exists(outputFolderPath))
                 Directory.CreateDirectory(outputFolderPath);
@@ -165,7 +172,10 @@ namespace BinStorage.Test
                     .ForEach(s =>
                     {
                         string fileName = Path.GetFileName(s);
-                        AddFile(storage, s, fileName);
+                        if (isNetwork)
+                            AddNetworkStream(storage, s, fileName);
+                        else
+                            AddFileStream(storage, s, fileName); ;
                     });
             }
             // Assert
@@ -178,12 +188,23 @@ namespace BinStorage.Test
             Assert.IsTrue(expectedStorageBytes.SequenceEqual(actualStorageBytes));
         }
 
-        private void AddFile(IBinaryStorage storage, string filePath, string key)
+        private void AddFileStream(IBinaryStorage storage, string filePath, string key)
         {
             using (var file = new FileStream(filePath, FileMode.Open))
             {
                 StreamInfo info = StreamInfo.Empty;
                 storage.Add(key, file, info);
+            }
+        }
+
+        private void AddNetworkStream(IBinaryStorage storage, string filePath, string key)
+        {
+            byte[] data = File.ReadAllBytes(filePath);
+            using (var networkStream = new NetworkStreamMock())
+            {
+                networkStream.Write(data, 0, data.Length);
+                StreamInfo info = StreamInfo.Empty;
+                storage.Add(key, networkStream, info);
             }
         }
 
