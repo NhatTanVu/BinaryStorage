@@ -41,7 +41,8 @@ namespace BinStorage.TestApp
                 Directory.EnumerateFiles(sourceFolder, "*", SearchOption.AllDirectories)
                     .AsParallel().WithDegreeOfParallelism(degreeOfParallelism).ForAll(s =>
                     {
-						using (var resultStream = storage.Get(s)) {
+                        string key = Path.GetFileName(s);
+						using (var resultStream = storage.Get(key)) {
 							using (var sourceStream = new FileStream(s, FileMode.Open, FileAccess.Read)) {
 								if (sourceStream.Length != resultStream.Length) {
 									throw new Exception(string.Format("Length did not match: Source - '{0}', Result - {1}", sourceStream.Length, resultStream.Length));
@@ -72,7 +73,8 @@ namespace BinStorage.TestApp
                 Directory.EnumerateFiles(sourceFolder, "*", SearchOption.AllDirectories)
                     .AsParallel().WithDegreeOfParallelism(degreeOfParallelism).ForAll(s =>
                     {
-                        using (var resultStream = storage.Get(s))
+                        string key = Path.GetFileName(s);
+                        using (var resultStream = storage.Get(key))
                         {
                             using (var sourceStream = new FileStream(s, FileMode.Open, FileAccess.Read))
                             {
@@ -108,8 +110,9 @@ namespace BinStorage.TestApp
 		{
 			using (var file = new FileStream(fileName, FileMode.Open))
 			{
+                string key = Path.GetFileName(fileName);
                 StreamInfo info = StreamInfo.Empty;
-                storage.Add(fileName, file, info);
+                storage.Add(key, file, info);
 			}
 		}
 
