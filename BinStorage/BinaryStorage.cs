@@ -408,11 +408,14 @@ namespace BinStorage
         {
             if (!parameters.IsCompressed && (result.Length > this.storageConfiguration.CompressionThreshold))
             {
-                parameters.IsCompressed = true;
+                parameters.IsManuallyCompressed = true;
                 return result.Compress();
             }
             else
+            {
+                parameters.IsManuallyCompressed = false;
                 return result;
+            }
         }
 
         private void CalculateHash(Stream result, ref StreamInfo parameters)
@@ -429,7 +432,7 @@ namespace BinStorage
 
         private Stream Decompress(Stream result, StreamInfo parameters)
         {
-            if (parameters.IsCompressed)
+            if (parameters.IsManuallyCompressed)
                 return result.Decompress();
             else
             {

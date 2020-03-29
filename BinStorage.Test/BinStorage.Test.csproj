@@ -61,6 +61,9 @@
     <None Include="_assert\ShouldAdd\storage.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="_assert\ShouldGetAndNotDecompressIfAddedCompressed\random_bytes.rar">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="_assert\ShouldGet\16ddb0c9-9a88-47f2-a582-f7f09322506b.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -130,6 +133,12 @@
     <None Include="_input\ShouldAdd\9c6d89e6-c39b-4ad3-ac0c-c59270cf4ad9.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="_input\ShouldGetAndNotDecompressIfAddedCompressed\index.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldGetAndNotDecompressIfAddedCompressed\storage.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="_input\ShouldGet\index.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -142,34 +151,37 @@
     <None Include="_input\ShouldNotAddDuplicateKey\storage.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\13598b86-ebfc-4159-b7bf-f6f519ecb6f7.bin">
+    <None Include="_input\ShouldNotCompressIfAlreadyCompressed\random_bytes.rar">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\1dd98934-66ea-4402-8cb4-bb74871e5bea.bin">
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\13598b86-ebfc-4159-b7bf-f6f519ecb6f7.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\2296b29f-781c-4f83-9470-af9de0877483.bin">
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\1dd98934-66ea-4402-8cb4-bb74871e5bea.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\25802795-8aff-415a-88cc-58eec15438d8.bin">
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\2296b29f-781c-4f83-9470-af9de0877483.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\3a6cacb4-a278-46f2-9a8d-4aa4bd016dbc.bin">
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\25802795-8aff-415a-88cc-58eec15438d8.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\55887704-34a5-4416-9216-de34c656c85c.bin">
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\3a6cacb4-a278-46f2-9a8d-4aa4bd016dbc.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\906de929-c1b2-460f-af56-e01f5847b509.bin">
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\55887704-34a5-4416-9216-de34c656c85c.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\92303353-be13-419a-920e-8bf1e63a3ea4.bin">
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\906de929-c1b2-460f-af56-e01f5847b509.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\acbd1deb-cd6d-4d57-a1e0-99e20630b186.bin">
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\92303353-be13-419a-920e-8bf1e63a3ea4.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="_input\ShouldNotCompress\ca76f37a-717a-4e48-92a8-3eb062dddacf.bin">
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\acbd1deb-cd6d-4d57-a1e0-99e20630b186.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldNotCompressIfUnderThreshold\ca76f37a-717a-4e48-92a8-3eb062dddacf.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="_input\ShouldStoreOnce\data.bin">

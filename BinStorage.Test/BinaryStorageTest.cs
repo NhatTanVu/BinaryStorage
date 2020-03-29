@@ -63,23 +63,10 @@ namespace BinStorage.Test
                         {
                             using (var sourceStream = new FileStream(s, FileMode.Open, FileAccess.Read))
                             {
-                                if (sourceStream.Length != resultStream.Length)
+                                if (!AreStreamsEqual(s, sourceStream, resultStream))
                                 {
-                                    throw new Exception(string.Format("Length did not match: Source - '{0}', Result - {1}", sourceStream.Length, resultStream.Length));
-                                }
-
-                                byte[] hash1, hash2;
-                                using (MD5 md5 = MD5.Create())
-                                {
-                                    hash1 = md5.ComputeHash(sourceStream);
-
-                                    md5.Initialize();
-                                    hash2 = md5.ComputeHash(resultStream);
-                                }
-
-                                if (!hash1.SequenceEqual(hash2))
-                                {
-                                    throw new Exception(string.Format("Hashes do not match for file - '{0}'  ", s));
+                                    // Assert
+                                    Assert.IsTrue(false);
                                 }
                             }
                         }
@@ -87,6 +74,28 @@ namespace BinStorage.Test
             }
             // Assert
             Assert.IsTrue(true);
+        }
+
+        [TestMethod]
+        public void ShouldGetAndNotDecompressIfAddedCompressed()
+        {
+            // Arrange
+            string inputFolder = "ShouldGetAndNotDecompressIfAddedCompressed";
+            string inputFolderPath = Path.Combine(this.inputBasePath, inputFolder);
+            string assertFileName = "random_bytes.rar";
+            string assertFilePath = Path.Combine(this.assertBasePath, inputFolder, assertFileName);
+            // Act
+            using (var storage = new BinaryStorage(new StorageConfiguration() { WorkingFolder = inputFolderPath }))
+            {
+                using (var resultStream = storage.Get(assertFileName))
+                {
+                    using (var sourceStream = new FileStream(assertFilePath, FileMode.Open, FileAccess.Read))
+                    {
+                        // Assert
+                        Assert.IsTrue(AreStreamsEqual(assertFileName, sourceStream, resultStream));
+                    }
+                }
+            }
         }
 
         [TestMethod]
@@ -112,10 +121,44 @@ namespace BinStorage.Test
         }
 
         [TestMethod]
-        public void ShouldNotCompress()
+        public void ShouldNotCompressIfAlreadyCompressed()
         {
             // Arrange
-            string shouldNotCompress = "ShouldNotCompress";
+            string shouldNotCompress = "ShouldNotCompressIfAlreadyCompressed";
+            string inputFolderPath = Path.Combine(this.inputBasePath, shouldNotCompress);
+            string outputFolderPath = Path.Combine(this.outputBasePath, shouldNotCompress);
+            string outputStoragePath = Path.Combine(outputFolderPath, BinaryStorage.StorageFileName);
+            long assertLength = 0;
+
+            if (!Directory.Exists(outputFolderPath))
+                Directory.CreateDirectory(outputFolderPath);
+            else
+                EmptyFolder(outputFolderPath);
+            // Act
+            using (var storage = new BinaryStorage(new StorageConfiguration() { WorkingFolder = outputFolderPath }))
+            {
+                Directory.GetFiles(inputFolderPath, "*", SearchOption.AllDirectories).ToList()
+                    .ForEach(s =>
+                    {
+                        assertLength += new FileInfo(s).Length;
+                        string fileName = Path.GetFileName(s);
+                        StreamInfo info = new StreamInfo()
+                        {
+                            IsCompressed = true
+                        };
+                        AddFileStream(storage, s, fileName, info);
+                    });
+            }
+            // Assert
+            long actualLength = new FileInfo(outputStoragePath).Length;
+            Assert.AreEqual(assertLength, actualLength);
+        }
+
+        [TestMethod]
+        public void ShouldNotCompressIfUnderThreshold()
+        {
+            // Arrange
+            string shouldNotCompress = "ShouldNotCompressIfUnderThreshold";
             string inputFolderPath = Path.Combine(this.inputBasePath, shouldNotCompress);
             string outputFolderPath = Path.Combine(this.outputBasePath, shouldNotCompress);
             string outputStoragePath = Path.Combine(outputFolderPath, BinaryStorage.StorageFileName);
@@ -188,11 +231,12 @@ namespace BinStorage.Test
             Assert.IsTrue(expectedStorageBytes.SequenceEqual(actualStorageBytes));
         }
 
-        private void AddFileStream(IBinaryStorage storage, string filePath, string key)
+        private void AddFileStream(IBinaryStorage storage, string filePath, string key, StreamInfo info = null)
         {
             using (var file = new FileStream(filePath, FileMode.Open))
             {
-                StreamInfo info = StreamInfo.Empty;
+                if (info == null)
+                    info = StreamInfo.Empty;
                 storage.Add(key, file, info);
             }
         }
@@ -219,6 +263,30 @@ namespace BinStorage.Test
             {
                 dir.Delete(true);
             }
+        }
+
+        private static bool AreStreamsEqual(string sourceName, FileStream sourceStream, Stream resultStream)
+        {
+            if (sourceStream.Length != resultStream.Length)
+            {
+                return false;
+            }
+
+            byte[] hash1, hash2;
+            using (MD5 md5 = MD5.Create())
+            {
+                hash1 = md5.ComputeHash(sourceStream);
+
+                md5.Initialize();
+                hash2 = md5.ComputeHash(resultStream);
+            }
+
+            if (!hash1.SequenceEqual(hash2))
+            {
+                return false;
+            }
+
+            return true;
         }
         #endregion
     }
