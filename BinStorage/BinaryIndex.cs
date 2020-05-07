@@ -32,5 +32,10 @@ namespace BinStorage
         /// Length of the stream.
         /// </summary>
         public long Length { get; set; }
+
+        /// <summary>
+        /// Length of all compressed chunks
+        /// </summary>
+        public long[] CompressedChunksLength { get; set; }
     }
 }

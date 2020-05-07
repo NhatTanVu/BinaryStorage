@@ -48,11 +48,11 @@ namespace BinStorage.Extensions
             return result;
         }
 
-        private static ConcurrentDictionary<string, string> tempFilePaths = new ConcurrentDictionary<string, string>();
         public static Stream Decompress(this Stream stream)
         {
             string tempFilePath = Path.GetTempFileName();
-            FileStream result = new FileStream(tempFilePath, FileMode.Create);
+            FileStream result = new FileStream(tempFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
+
             using (Stream clonedStream = new MemoryStream())
             {
                 stream.CopyTo(clonedStream);
@@ -65,28 +65,7 @@ namespace BinStorage.Extensions
             }
             result.Seek(0, SeekOrigin.Begin);
 
-            tempFilePaths.TryAdd(tempFilePath, tempFilePath);
-            // TODO: Find another way to clean up temp files periodically
-            //new Thread(() =>
-            //{
-            //    Thread.CurrentThread.IsBackground = true;
-            //    ClearTempFiles();
-            //}).Start();
-
             return result;
-        }
-
-        public static void ClearTempFiles()
-        {
-            try
-            {
-                foreach (string path in tempFilePaths.Keys)
-                {
-                    if (File.Exists(path))
-                        File.Delete(path);
-                }
-            }
-            catch { }
         }
     }
 }

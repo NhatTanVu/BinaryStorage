@@ -8,6 +8,7 @@ using System.Threading;
 using System.Collections.Specialized;
 using System.Security.Cryptography;
 using System.Linq;
+using System.IO.Compression;
 
 namespace BinStorage
 {
@@ -30,6 +31,7 @@ namespace BinStorage
         private long storageBufferLength = 0;
         private const int MAX_BUFFER_INDEX_SIZE = 1024 * 1024; // 1MB
         private const int MAX_BUFFER_STORAGE_SIZE = 1024 * 1024; // 1MB
+        private const int MAX_BUFFER_ADD_SIZE = 16 * 1024; // 16KB
 
         public static string IndexFileName = "index.bin";
         public static string StorageFileName = "storage.bin";
@@ -64,37 +66,81 @@ namespace BinStorage
                 throw new ArgumentNullException("data is null");
             if (parameters == null)
                 throw new ArgumentNullException("parameters is null");
-            CheckDataStream(data, parameters);
 
             if (CheckContains(key))
                 throw new ArgumentException("An element with the same key already exists or provided hash or length does not match the data");
             CheckMaxIndexFile();
 
             StreamInfo cloneParameters = (StreamInfo)parameters.Clone();
-            using (Stream compressedData = Compress(data, ref cloneParameters))
-            {
-                CalculateHash(compressedData, ref cloneParameters);
-                
-                lock (_lockObject)
-                {
-                    BinaryIndex index = FindBinaryIndexByHash(cloneParameters);
-                    bool isNew = false;
-                    if (index == null)
-                    {
-                        CheckMaxStorageFile(compressedData);
-                        index = CreateBinaryIndex(compressedData, cloneParameters);
-                        isNew = true;
-                    }
-                    if (!this.indexTableBuffer.TryAdd(key, index))
-                        throw new ArgumentException("An element with the same key already exists");
-                    else if (isNew)
-                    {
-                        storageBufferLength += compressedData.Length;
-                        AppendStorageBuffer(compressedData);
-                    }
+            long firstBufferLength = MAX_BUFFER_ADD_SIZE;
+            if (this.storageConfiguration.CompressionThreshold > 0)
+                firstBufferLength = this.storageConfiguration.CompressionThreshold + 1;
+            List<byte> outputBytes = new List<byte>();
+            List<long> compressedChunksLength = new List<long>();
 
-                    FlushBuffer();
+            using (MD5 hasher = MD5.Create())
+            {
+                hasher.Initialize();
+                byte[] buffer = new byte[firstBufferLength];
+                int read = data.Read(buffer, 0, (int)firstBufferLength);
+                if (read < firstBufferLength)
+                    buffer = buffer.Take(read).ToArray();
+
+                bool needCompressed = false;
+                if (!parameters.IsCompressed && (read > this.storageConfiguration.CompressionThreshold))
+                {
+                    needCompressed = true;
+                    outputBytes.AddRange(CompressBytes(buffer, 0, read));
+                    cloneParameters.IsManuallyCompressed = true;
+                    compressedChunksLength.Add(outputBytes.Count);
                 }
+                else
+                    outputBytes.AddRange(buffer);
+                hasher.TransformBlock(buffer, 0, read, null, 0);
+
+                buffer = new byte[MAX_BUFFER_ADD_SIZE];
+                while ((read = data.Read(buffer, 0, MAX_BUFFER_ADD_SIZE)) > 0)
+                {
+                    if (needCompressed)
+                    {
+                        byte[] compressedChunk = CompressBytes(buffer, 0, read);
+                        outputBytes.AddRange(compressedChunk);
+                        compressedChunksLength.Add(compressedChunk.Length);
+                    }
+                    else
+                        outputBytes.AddRange(buffer);
+                    hasher.TransformBlock(buffer, 0, read, null, 0);
+                }
+                // https://stackoverflow.com/questions/3621283/compute-a-hash-from-a-stream-of-unknown-length-in-c-sharp
+                hasher.TransformFinalBlock(new byte[0], 0, 0);
+
+                byte[] hash = hasher.Hash;
+                if (parameters.Hash != null)
+                    CheckHash(hash, parameters);
+                else
+                    cloneParameters.Hash = hash;
+            }
+
+            lock (_lockObject)
+            {
+                byte[] dataBytes = outputBytes.ToArray();
+                BinaryIndex index = FindBinaryIndexByHash(cloneParameters);
+                bool isNew = false;
+                if (index == null)
+                {
+                    CheckMaxStorageFile(dataBytes);
+                    index = CreateBinaryIndex(dataBytes, compressedChunksLength.ToArray(), cloneParameters);
+                    isNew = true;
+                }
+                if (!this.indexTableBuffer.TryAdd(key, index))
+                    throw new ArgumentException("An element with the same key already exists");
+                else if (isNew)
+                {
+                    storageBufferLength += outputBytes.Count;
+                    this.storageBuffer.Enqueue(dataBytes);
+                }
+
+                FlushBuffer();
             }
         }
 
@@ -114,7 +160,8 @@ namespace BinStorage
                 BinaryIndex index;
                 if (indexTable.TryGetValue(key, out index))
                 {
-                    result = Decompress(result, index.Information);
+                    byte[] storageData = ((MemoryStream)result).ToArray();
+                    result = Decompress(storageData, index.Reference.CompressedChunksLength, index.Information);
                 }
                 else
                     throw new KeyNotFoundException("key does not exist");
@@ -124,11 +171,11 @@ namespace BinStorage
                 BinaryIndex index;
                 if (indexTable.TryGetValue(key, out index))
                 {
-                    Stream storageStream = GetFromStorageFile(index);
-                    if (storageStream != null)
+                    byte[] storageData = GetBytesFromStorageFile(index);
+                    if (storageData != null)
                     {
-                        result = Decompress(storageStream, index.Information);
-                        AddToCache(key, storageStream);
+                        result = Decompress(storageData, index.Reference.CompressedChunksLength, index.Information);
+                        AddToCache(key, new MemoryStream(storageData));
                     }
                     else
                         throw new KeyNotFoundException("key does not exist");
@@ -150,7 +197,6 @@ namespace BinStorage
         {
             FlushBuffer(false);
             ClearCache();
-            ObjectSerializer.ClearTempFiles();
         }
         #endregion
 
@@ -255,21 +301,6 @@ namespace BinStorage
             }
         }
 
-        private void AppendStorageBuffer(Stream data)
-        {
-            byte[] buffer = new byte[16 * 1024];
-            using (MemoryStream ms = new MemoryStream())
-            {
-                int read;
-                while ((read = data.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    ms.Write(buffer, 0, read);
-                }
-                byte[] dataBytes = ms.ToArray();
-                this.storageBuffer.Enqueue(dataBytes);
-            }
-        }
-
         private void SaveIndex()
         {
             using (FileStream fileStream = File.Open(this.indexFilePath, FileMode.Create))
@@ -290,50 +321,9 @@ namespace BinStorage
             return result.Equals(default(KeyValuePair<string, BinaryIndex>)) ? null : result.Value;
         }
 
-        private BinaryIndex CreateBinaryIndex(Stream data, StreamInfo parameters)
-        {
-            long offset = GetStorageFileLength() + this.storageBufferLength;
-            BinaryIndex result = new BinaryIndex()
-            {
-                Reference = new BinaryReference()
-                {
-                    Offset = offset,
-                    Length = data.Length
-                },
-                Information = parameters
-            };
-
-            return result;
-        }
-
         private long GetStorageFileLength()
         {
             return new FileInfo(this.storageFilePath).Length;
-        }
-
-        private void CheckDataStream(Stream data, StreamInfo parameters)
-        {
-            if (parameters.Length.HasValue && data.Length != parameters.Length)
-                throw new ArgumentException("Provided length does not match the data");
-            if (parameters.Hash != null)
-            {
-                byte[] hash1;
-                using (MD5 md5 = MD5.Create())
-                {
-                    hash1 = md5.ComputeHash(data);
-                    if (!hash1.SequenceEqual(parameters.Hash))
-                    {
-                        throw new ArgumentException("Provided hash does not match the data");
-                    }
-                }
-            }
-        }
-
-        private void CheckMaxStorageFile(Stream data)
-        {
-            long storageFileSize = GetStorageFileLength() + this.storageBufferLength;
-            if ((this.storageConfiguration.MaxStorageFile > 0) && ((storageFileSize + data.Length) > this.storageConfiguration.MaxStorageFile))
-                throw new Exception("MaxStorageFile was reached");
         }
 
         private void CreateStorage()
@@ -370,20 +360,6 @@ namespace BinStorage
             return result;
         }
 
-        private Stream GetFromStorageFile(BinaryIndex index)
-        {
-            MemoryStream result = null;
-            using (FileStream fs = File.Open(this.storageFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                fs.Seek(index.Reference.Offset, SeekOrigin.Begin);
-                byte[] data = new byte[index.Reference.Length];
-                fs.Read(data, 0, data.Length);
-                result = new MemoryStream(data);
-            }
-
-            return result;
-        }
-
         private void AddToCache(string key, Stream result)
         {
             this.storageCache.Set(key, result, DateTimeOffset.MaxValue);
@@ -404,43 +380,99 @@ namespace BinStorage
             return this.indexTable.ContainsKey(key) || this.indexTableBuffer.ContainsKey(key);
         }
 
-        private Stream Compress(Stream result, ref StreamInfo parameters)
+        private byte[] CompressBytes(byte[] data, int offset, int length)
         {
-            if (!parameters.IsCompressed && (result.Length > this.storageConfiguration.CompressionThreshold))
+            // https://stackoverflow.com/questions/39191950/how-to-compress-a-byte-array-without-stream-or-system-io
+            MemoryStream output = new MemoryStream();
+            using (DeflateStream dstream = new DeflateStream(output, CompressionLevel.Optimal))
             {
-                parameters.IsManuallyCompressed = true;
-                return result.Compress();
+                dstream.Write(data, offset, length);
             }
-            else
+            return output.ToArray();
+        }
+
+        private byte[] DecompressBytes(byte[] data)
+        {
+            MemoryStream input = new MemoryStream(data);
+            MemoryStream output = new MemoryStream();
+            using (DeflateStream dstream = new DeflateStream(input, CompressionMode.Decompress))
             {
-                parameters.IsManuallyCompressed = false;
+                dstream.CopyTo(output);
+            }
+            return output.ToArray();
+        }
+
+        private void CheckHash(byte[] hash, StreamInfo parameters)
+        {
+            if (!hash.SequenceEqual(parameters.Hash))
+            {
+                throw new ArgumentException("Provided hash does not match the data");
+            }
+        }
+
+        private void CheckMaxStorageFile(byte[] data)
+        {
+            long storageFileSize = GetStorageFileLength() + this.storageBufferLength;
+            if ((this.storageConfiguration.MaxStorageFile > 0) && ((storageFileSize + data.Length) > this.storageConfiguration.MaxStorageFile))
+                throw new Exception("MaxStorageFile was reached");
+        }
+
+        private BinaryIndex CreateBinaryIndex(byte[] data, long[] compressedChunksLength, StreamInfo parameters)
+        {
+            long offset = GetStorageFileLength() + this.storageBufferLength;
+            BinaryIndex result = new BinaryIndex()
+            {
+                Reference = new BinaryReference()
+                {
+                    Offset = offset,
+                    Length = data.Length,
+                    CompressedChunksLength = compressedChunksLength
+                },
+                Information = parameters
+            };
+
+            return result;
+        }
+
+        private byte[] GetBytesFromStorageFile(BinaryIndex index)
+        {
+            byte[] data = null;
+            using (FileStream fs = File.Open(this.storageFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                fs.Seek(index.Reference.Offset, SeekOrigin.Begin);
+                data = new byte[index.Reference.Length];
+                fs.Read(data, 0, data.Length);
+            }
+
+            return data;
+        }
+
+        private Stream Decompress(byte[] data, long[] compressedChunksLength, StreamInfo parameters)
+        {
+            // https://stackoverflow.com/questions/34776031/how-to-create-a-temp-file-that-is-automatically-deleted-after-the-program-termin/34776237
+            string tempFilePath = Path.GetTempFileName();
+            FileStream result = new FileStream(tempFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.DeleteOnClose);
+            if (parameters.IsManuallyCompressed)
+            {
+                int offset = 0;
+                List<byte> outputData = new List<byte>();
+                foreach (long chunklength in compressedChunksLength)
+                {
+                    byte[] truncArray = new byte[chunklength];
+                    Array.Copy(data, offset, truncArray, 0, chunklength);
+                    outputData.AddRange(DecompressBytes(truncArray));
+                    offset += (int)chunklength;
+                }
+                byte[] resultBytes = outputData.ToArray();
+                result.Write(resultBytes, 0, resultBytes.Length);
+                result.Seek(0, SeekOrigin.Begin);
                 return result;
             }
-        }
-
-        private void CalculateHash(Stream result, ref StreamInfo parameters)
-        {
-            if(parameters.Hash == null)
-            {
-                using (MD5 md5 = MD5.Create())
-                {
-                    parameters.Hash = md5.ComputeHash(result);
-                    result.Seek(0, SeekOrigin.Begin);
-                }
-            }
-        }
-
-        private Stream Decompress(Stream result, StreamInfo parameters)
-        {
-            if (parameters.IsManuallyCompressed)
-                return result.Decompress();
             else
             {
-                Stream clonedStream = new MemoryStream();
-                result.CopyTo(clonedStream);
+                result.Write(data, 0, data.Length);
                 result.Seek(0, SeekOrigin.Begin);
-                clonedStream.Seek(0, SeekOrigin.Begin);
-                return clonedStream;
+                return new MemoryStream(data);
             }
         }
         #endregion
