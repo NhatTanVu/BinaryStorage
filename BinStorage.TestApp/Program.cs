@@ -64,7 +64,6 @@ namespace BinStorage.TestApp
                         Interlocked.Add(ref count, 1);
                     });
                 Console.WriteLine("Time to verify: " + sw.Elapsed + ", count = " + count);
-                ObjectSerializer.ClearTempFiles();
 
                 Console.WriteLine("Verifying data 2nd time");
                 sw = Stopwatch.StartNew();

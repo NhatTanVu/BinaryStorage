@@ -219,8 +219,15 @@ namespace BinStorage.Test
             {
                 throw new ArgumentOutOfRangeException("size");
             }
-            buffer = m_Data.Skip(offset).Take(size).ToArray();
-            return buffer.Length;
+
+            byte[] dataRead = m_Data.Take(size).ToArray();
+            int numRead = dataRead.Length;
+            var firstPart = buffer.Take(offset);
+            var secondPart = buffer.Skip(offset + numRead);
+            buffer = firstPart.Concat(dataRead).Concat(secondPart).ToArray();
+            m_Data = m_Data.Skip(numRead).ToArray();
+
+            return numRead;
         }
 
         /// <summary>Writes data to the <see cref="T:System.Net.Sockets.NetworkStream" />.</summary>

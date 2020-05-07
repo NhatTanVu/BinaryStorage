@@ -188,7 +188,7 @@ namespace BinStorage.Test
         [TestMethod]
         public void ShouldAddNetworkStream()
         {
-            string shouldAddFolder = "ShouldAdd";
+            string shouldAddFolder = "ShouldAddNetworkStream";
             AddAndCheck(shouldAddFolder, isNetwork: true);
         }
 

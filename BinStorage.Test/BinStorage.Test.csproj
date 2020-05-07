@@ -55,6 +55,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="_assert\ShouldAddNetworkStream\index.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_assert\ShouldAddNetworkStream\storage.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="_assert\ShouldAdd\index.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -101,6 +107,36 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="_assert\ShouldStoreOnce\storage.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\16ddb0c9-9a88-47f2-a582-f7f09322506b.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\29b4d67b-cd7a-43ed-a8c1-0db68bee0dcf.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\3a6cacb4-a278-46f2-9a8d-4aa4bd016dbc.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\414be711-170c-455e-bf3e-8a22361c3065.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\56fdf2d9-c108-4bb6-bdda-5aae1c165351.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\5aa8d733-381b-4688-9f0b-50b405c2b796.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\793eee18-494e-479d-9a09-366829b1e6ff.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\7c425309-3d1d-4bc0-9950-52572fddd06c.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\81ce3f98-1c0d-4071-8df7-3580438cfb86.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="_input\ShouldAddNetworkStream\9c6d89e6-c39b-4ad3-ac0c-c59270cf4ad9.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="_input\ShouldAdd\16ddb0c9-9a88-47f2-a582-f7f09322506b.bin">
